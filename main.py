@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import LabelEncoder
+import pickle
 
 df = pd.read_csv("train.csv")
 df = df.drop(columns=['Cabin', 'Name', 'PassengerId', 'Ticket'])
@@ -41,9 +42,32 @@ class LogisticRegression:
             if _ % 100 == 0:
                 print(f"Epoch {_}, Loss: {average_loss:.4f}")
             
-    def predict(self):
-        return self.sigmoid(self.X @ self.weight + self.bias) >= 0.5
+    def predict(self, X=None):
+        if X is None:
+            X = self.X
+        else:
+            X = X.to_numpy if isinstance(X, pd.DataFrame) else X
+            return self.sigmoid(self.X @ self.weight + self.bias) >= 0.5
+    def evaluate(self, X=None, y=None):
+        if X is None:
+            X = self.X
+        else:
+            X = X.to_numpy if isinstance(X, pd.DataFrame) else X
+        if y is None:
+            y = self.y
+        else:
+            y = y.to_numpy().reshape(-1, 1) if isinstance(y, pd.Series) else y
+        predictions = self.predict(X)
+        return np.mean(predictions == y)
 
+    def save(self, filepath: str):
+        with open(filepath, "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(filepath: str):
+        with open(filepath, "rb") as f:
+            return pickle.load(f)
 
 le = LabelEncoder()
 le.fit(["S", "C", "Q"])
